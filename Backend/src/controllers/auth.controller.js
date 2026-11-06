@@ -6,7 +6,7 @@ const tokenBlacklistModel = require("../models/blacklist.model")
 /**
  * @name registerUserController
  * @description register a new user, expects username, email and password in the request body
- * @access Public
+ * @access  Public
  */
 async function registerUserController(req, res) {
 
@@ -42,7 +42,7 @@ async function registerUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    res.cookie("token", token)
+    res.cookie("token", token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" })
 
 
     res.status(201).json({
@@ -70,7 +70,7 @@ async function loginUserController(req, res) {
 
     if (!user) {
         return res.status(400).json({
-            message: "Invalid email or password"
+            message: "Invalid email "
         })
     }
 
@@ -88,7 +88,7 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    res.cookie("token", token)
+    res.cookie("token", token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" })
     res.status(200).json({
         message: "User loggedIn successfully.",
         user: {
@@ -112,7 +112,7 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token })
     }
 
-    res.clearCookie("token")
+    res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" })
 
     res.status(200).json({
         message: "User logged out successfully"
@@ -128,6 +128,9 @@ async function getMeController(req, res) {
 
     const user = await userModel.findById(req.user.id)
 
+    if (!user) {
+        return res.status(404).json({ message: "User not found." })
+    }
 
 
     res.status(200).json({
